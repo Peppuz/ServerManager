@@ -1,62 +1,75 @@
-import telegram, logging, os
-from telegram.ext import (Updater, MessageHandler, Filters, CommandHandler, CallbackQueryHandler)
-from telegram import (Emoji, ForceReply, InlineKeyboardButton, InlineKeyboardMarkup)
-from telegram import ReplyKeyboardMarkup as RKM
-from functools import wraps
 import test
-# from mwt import MWT
+from functools import wraps
+import telegram
+import logging
+import os
+import json
+from telegram.ext import (Updater,
+    MessageHandler,
+    Filters,
+    CommandHandler,
+    CallbackQueryHandler)
+from telegram import (Emoji,
+    ForceReply,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup)
+from telegram import ReplyKeyboardMarkup as RKM
 
-bot = telegram.Bot('237607855:AAG5DnCltKar7R5lMk3zo22iR8q9v44Kco0')
-updater = Updater('237607855:AAG5DnCltKar7R5lMk3zo22iR8q9v44Kco0')
-logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%I:%M', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s - %(message)s',
+                    datefmt='%I:%M',
+                    level=logging.DEBUG)
 
-auth = [135605474, 59114236]
-pwd = ''
-online_data = []
+# loads from json all user custom data
+config = json.load(open('config.json'))
 
-
-# @MWT(timeout=60*60) # Decorator time 1hour
-def check_online_data(bot, chat_id):
-    if not online_data:
-        return False
-    for item in online_data:
-        bot.deleteMessage(chat_id, item)
-    return True
+bot = telegram.Bot(config['token'])
+updater = Updater(config['token'])
 
 
 def restricted(func):
     @wraps(func)
     def wrapped(bot, update, *args, **kwargs):
         user_id = update.effective_user.id
-        if user_id not in auth:
+        if user_id not in config['admins']:
             bot.sendMessage(update.message.chat_id, "Unauthorized access denied.")
-            print("Unauthorized access denied.")
+            print("Unauthorized user, access denied.")
             return
         return func(bot, update, *args, **kwargs)
     return wrapped
 
 
-def start(b,u):
-    m = u.message
-    usr	= m.from_user
-    # setting user status
-    bot.sendMessage(m.chat_id, text='Ciao '+ usr.first_name+'!')
+def start(b, u):
+    bot.sendMessage(u.message.chat_id,
+                    text='Ciao ' + u.message.from_user.first_name+'!')
+    for val in config['admins']:
+        bot.sendMessage(val, "User: %s \n started ServerManager"
+                        % u.message.from_user.username)
 
 
 @restricted
-def commands(b,u):
+def commands(b, u):
     m = u.message
-    usr	= m.from_user
+    usr = m.from_user
     if 'cd' in m.text:
-        os.chdir(m.text[3:])
+        try:
+            os.chdir(m.text[3:])
+        except Exception as e:
+            bot.sendMessage(m.chat_id, "There was a lil prob with the command.")
         pwd = os.popen('pwd').read()
-        bot.sendMessage(m.chat_id, '<b>Folder</b>:\n%s\n%s' % (pwd, os.popen('ls').read()), parse_mode='HTML')
+        bot.sendMessage(
+            m.chat_id,
+            '<b>Folder</b>:\n%s\n%s' % (pwd, os.popen('ls').read()),
+            parse_mode='HTML'
+        )
         return
+    try:
+        bot.sendMessage(m.chat_id, "%s" % os.popen(m.text).read())
+    except Exception as e:
+        bot.sendMessage(m.chat_id, "Command not recognized")
 
-    bot.sendMessage(m.chat_id, "%s" % os.popen(m.text).read())
 
 @restricted
-def ricevi_file(b,u):
+def ricevi_file(b, u):
     d = u.message.document
     pfile = bot.getFile(d.file_id)
     pfile.download(custom_path=pwd)
@@ -64,52 +77,25 @@ def ricevi_file(b,u):
 
 
 @restricted
-def invia_file(b,u, args):
+def send_doc(b, u, args):
+    # Simple usagx
     m = u.message
     print args
     with open(args[0]) as figa:
         loc = bot.sendDocument(m.chat_id, figa, caption='Pepuuz')
         online_data.append(loc.message_id)
-    check_online_data(bot,m.chat_id)
-
-
-@restricted
-def deletedata(b,u):
-    query = u.callback_query
-    chat_id = query.message.chat_id
-    usr_id = query.from_user.id
-    txt = query.data  # <= trip_id
-    bot.deleteMessage(chat_id, txt)
-    nextm = str(int(txt) + 1)
-    bot.deleteMessage(chat_id, nextm)
-
-
-def oraristp_data(bot,update):
-
-    data = test.main_search()
-    msg = " Richieste Totali: %s\n\n" \
-          " Analisi Dispositivi:\n" \
-          "  Richieste iOS: %s\n" \
-          "  Richieste Android: %s\n\n" \
-          " Analisi mensile:\n" \
-          "  Richieste Maggio: %s\n" \
-          "  Richieste Giugno: %s\n" \
-          "  Richieste Luglio: %s\n" \
-          % (data['total'], data['ios'], data['android'], data['maggio'], data['giugno'], data['luglio'])
-    msg += " Top 3 Partenze: %s, %s, %s" % (data['Request-partenza'][0][0], data['Request-partenza'][1][0], data['Request-partenza'][2][0])
-    msg += " Top 3 Destinazioni: %s, %s, %s" % (data['Request-destinazione'][0][0], data['Request-destinazione'][1][0], data['Request-destinazione'][2][0])
-    msg += " Top 5 Tratte: %s | %s | %s | %s | %s" % (data['Tratte'][0][0], data['Tratte'][1][0], data['Tratte'][2][0], data['Tratte'][3][0], data['Tratte'][4][0])
-    bot.sendMessage(update.message.chat_id, msg )
+    check_online_data(bot, m.chat_id)
 
 
 if __name__ == '__main__':
     ds = updater.dispatcher
-
-    ds.add_handler(CommandHandler('start',start))
-    ds.add_handler(CommandHandler('get',invia_file, pass_args=True))
-    ds.add_handler(CommandHandler('data', oraristp_data))
-    ds.add_handler(CallbackQueryHandler(deletedata))
-    ds.add_handler(MessageHandler(Filters.text,commands))
+    # Commands
+    ds.add_handler(CommandHandler('start', start))
+    ds.add_handler(CommandHandler('get', send_doc, pass_args=True))
+    # Messages
+    ds.add_handler(MessageHandler(Filters.text, commands))
     ds.add_handler(MessageHandler(Filters.document, ricevi_file))
-
+    # Callbacks
+    ds.add_handler(CallbackQueryHandler(deletedata))
+    # Start Bot
     updater.start_polling()
