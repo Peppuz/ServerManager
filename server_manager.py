@@ -1,11 +1,10 @@
-import test
 import telegram
 import logging
 import os
 import json
+from subprocess import call
 from functools import wraps
 from telegram import (
-    Emoji,
     ForceReply,
     InlineKeyboardButton,
     InlineKeyboardMarkup)
@@ -43,14 +42,16 @@ def restricted(func):
 def start(b, u):
     usr = u.message.from_user
     if usr.id in config['admins']:
-        text = "Bella %s! \nPWD ~ %s" % (usr.first_name, pwd)
-        bot.send_message(u.message.chat_id, text)
+        text = "~ Bella %s!~ " % usr.first_name
+        keyb = InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton('Processes', callback_data='processes')],
+                    [InlineKeyboardButton('Navigator', callback_data='navigator')]
+                
+                ])
+        bot.send_message(u.message.chat_id, text, reply_markup=keyb)
         # TODO: insert here Callback buttons if id in admin_list 
         return 
-    bot.send_message(u.message.chat_id,'Ciao ' + usr.first_name+'!')
-    for val in config['admins']:
-        bot.sendMessage(val, "User: %s \n started ServerManager"
-                        % u.message.from_user.username)
 
 
 @restricted
@@ -58,8 +59,9 @@ def commands(b, u):
     """ This function handles all type of text messages incoming """ 
     m = u.message
     usr = m.from_user
-    bot.send_message(m.chat_id, "executing.."
+    bot.send_message(m.chat_id, "executing..")
     # TODO: make the CLI do shiet 
+    # os. 
 
 
 @restricted
@@ -77,6 +79,35 @@ def send_doc(b, u, args):
     m = u.message
     with open(args[0]) as figa:
         bot.sendDocument(m.chat_id, figa, caption='Is this the file requested?')
+
+
+@restricted
+def callbacks(b, update):
+    query = update.callback_query
+    chat = query.message.chat.id
+    msg_id = query.message.message_id
+    text = str(query.data) + " Menu"
+
+    if query.data == 'pumper':
+        k = os.system('pwd')
+    elif query.data == 'website':
+        pass
+    elif query.data == 'ig_peppuz':
+        pass 
+
+    bot.edit_message_reply_markup(chat, msg_id, reply_markup=switch(query.data))
+
+
+def switch(x):
+    return {
+      'processes': InlineKeyboardMarkup([[InlineKeyboardButton('Pumper',callback_data='pumper')],[InlineKeyboardButton('back', callback_data='home')]]),
+      'home': InlineKeyboardMarkup([
+                    [InlineKeyboardButton('Processes', callback_data='processes')],
+                    [InlineKeyboardButton('Navigator', callback_data='navigator')]])
+      #'':  
+    }.get(x, None) 
+
+
 
 
 if __name__ == '__main__':
@@ -98,7 +129,7 @@ if __name__ == '__main__':
     ds.add_handler(MessageHandler(Filters.document, ricevi_file))
 
     # Callbacks
-    ds.add_handler(CallbackQueryHandler(deletedata))
+    ds.add_handler(CallbackQueryHandler(callbacks))
 
     # Start Bot
     updater.start_polling()
