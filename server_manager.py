@@ -2,7 +2,7 @@ import telegram
 import logging
 import os
 import json
-from subprocess import call
+import subprocess 
 from functools import wraps
 from telegram import (
     ForceReply,
@@ -43,15 +43,7 @@ def start(b, u):
     usr = u.message.from_user
     if usr.id in config['admins']:
         text = "~ Bella %s!~ " % usr.first_name
-        keyb = InlineKeyboardMarkup(
-                [
-                    [InlineKeyboardButton('Processes', callback_data='processes')],
-                    [InlineKeyboardButton('Navigator', callback_data='navigator')]
-                
-                ])
-        bot.send_message(u.message.chat_id, text, reply_markup=keyb)
-        # TODO: insert here Callback buttons if id in admin_list 
-        return 
+        bot.send_message(u.message.chat_id, text, reply_markup=switch('home'))
 
 
 @restricted
@@ -89,7 +81,8 @@ def callbacks(b, update):
     text = str(query.data) + " Menu"
 
     if query.data == 'pumper':
-        k = os.system('pwd')
+        k = subprocess.Popen('pwd')
+	bot.sendMessage(chat, str(k), reply_markup=switch('home'))
     elif query.data == 'website':
         pass
     elif query.data == 'ig_peppuz':
@@ -100,13 +93,14 @@ def callbacks(b, update):
 
 def switch(x):
     return {
-      'processes': InlineKeyboardMarkup([[InlineKeyboardButton('Pumper',callback_data='pumper')],[InlineKeyboardButton('back', callback_data='home')]]),
+      'processes': InlineKeyboardMarkup([
+	[InlineKeyboardButton('Pumper',callback_data='pumper')],
+	[InlineKeyboardButton('Menu', callback_data='home')]]),
       'home': InlineKeyboardMarkup([
-                    [InlineKeyboardButton('Processes', callback_data='processes')],
-                    [InlineKeyboardButton('Navigator', callback_data='navigator')]])
+        [InlineKeyboardButton('Processes', callback_data='processes')],
+        [InlineKeyboardButton('Navigator', callback_data='navigator')]])
       #'':  
     }.get(x, None) 
-
 
 
 
