@@ -10,3 +10,5 @@ Thanks to all the guys from [Python-Telegram-Bot](https://github.com/python-tele
 
 ## License 
 GPL3
+
+### P~Z
