@@ -1,19 +1,12 @@
 # Server Manager Bot
 
-The meaning of this bot is interfacing CLI of a UNIX server to Telegram.
+The meaning of this bot is interfacing CLI to Telegram messaging platform.
 
 > I centralized my online presence on to Pavel's messaging platform, I love Telegram and it's amazing how it become the new IRC of the era.
-I created this bot to execute scripts on my server at home, but the cool thing that I thought is that I don't have to open the SSH port. When I check the ssh access log a lot of indians try to brute force my Pi. I bet for mining and so..
-So I needed something practical, no apps, improve security, code some if needed, but it turned out as another damn project. 
+I created this bot to execute scripts on my server at home or for logging. When I check the ssh access log a lot of indians try to brute force my Pi. I bet for mining and so.
+So I needed something practical, no apps, improve security, write just few lines of code.
 
 Thanks to all the guys from [Python-Telegram-Bot](https://github.com/python-telegram-bot/python-telegram-bot) for the great work on the wrapper.
-
-
-## To-do:
-- [ ] Menu
-- [ ] Navigator assistant (cd ..)
-- [ ] Inline Keyboard as Aliases
-
 
 ## License 
 GPL3
