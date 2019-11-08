@@ -8,6 +8,9 @@ So I needed something practical, no apps, improve security, write just few lines
 
 Thanks to all the guys from [Python-Telegram-Bot](https://github.com/python-telegram-bot/python-telegram-bot) for the great work on the wrapper.
 
+### Disclaimer 
+This repo has never been finished
+
 ## License 
 GPL3
 
